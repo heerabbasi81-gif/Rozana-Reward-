@@ -150,7 +150,11 @@ class HomePage extends StatelessWidget {
                 title: const Text('Complete your first task'),
                 subtitle: const Text('Earn points'),
                 trailing: FilledButton(
-                  onPressed: () {},
+                  onPressed: () {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Task started! +10 points')),
+  );
+},
                   child: const Text('Start'),
                 ),
               ),
