@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const RozanaRewards());
@@ -39,6 +40,24 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  void continueToApp() {
+    if (phone.text.trim().length < 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid mobile number.'),
+        ),
+      );
+      return;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const HomePage(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,7 +82,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Daily tasks • Games • Rewards',
+                'Daily Tasks • Games • Rewards',
                 style: TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 35),
@@ -80,23 +99,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: () {
-                    if (phone.text.trim().length < 10) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter a valid mobile number.'),
-                        ),
-                      );
-                      return;
-                    }
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const HomePage(),
-                      ),
-                    );
-                  },
+                  onPressed: continueToApp,
                   child: const Text('Continue'),
                 ),
               ),
@@ -117,13 +120,40 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int points = 0;
-  final List<String> history = [];
+  List<String> history = [];
+  bool loading = true;
 
-  void addPoints(int amount, String message) {
+  @override
+  void initState() {
+    super.initState();
+    loadData();
+  }
+
+  Future<void> loadData() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      points = prefs.getInt('points') ?? 0;
+      history = prefs.getStringList('history') ?? [];
+      loading = false;
+    });
+  }
+
+  Future<void> saveData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('points', points);
+    await prefs.setStringList('history', history);
+  }
+
+  Future<void> addPoints(int amount, String message) async {
     setState(() {
       points += amount;
       history.insert(0, '$message +$amount points');
     });
+
+    await saveData();
+
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -137,9 +167,9 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Watch Ad'),
+          title: const Text('Watch Ad 📺'),
           content: const Text(
-            'Demo ad completed. Real ads will be connected later.',
+            'Demo ad completed. Real ads can be connected later.',
           ),
           actions: [
             FilledButton(
@@ -178,8 +208,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void openWallet() {
-    Navigator.push(
+  Future<void> openWallet() async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => WalletPage(
@@ -188,13 +218,19 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+
+    loadData();
   }
 
-  void resetPoints() {
+  Future<void> resetPoints() async {
     setState(() {
       points = 0;
       history.clear();
     });
+
+    await saveData();
+
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -205,6 +241,14 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Rozana Rewards'),
@@ -247,7 +291,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
-            const SizedBox(height: 15),
+            const SizedBox(height: 20),
 
             const Text(
               'Daily Tasks',
@@ -311,9 +355,13 @@ class _HomePageState extends State<HomePage> {
 
             Card(
               child: ListTile(
-                leading: const Icon(Icons.account_balance_wallet),
+                leading: const Icon(
+                  Icons.account_balance_wallet,
+                ),
                 title: const Text('Wallet & Withdraw'),
-                subtitle: const Text('View balance and withdrawal options'),
+                subtitle: const Text(
+                  'View balance and withdrawal options',
+                ),
                 trailing: OutlinedButton(
                   onPressed: openWallet,
                   child: const Text('Open'),
@@ -403,7 +451,9 @@ class WalletPage extends StatelessWidget {
               child: ListTile(
                 leading: const Icon(Icons.phone_android),
                 title: const Text('JazzCash'),
-                subtitle: const Text('Payment connection required'),
+                subtitle: const Text(
+                  'Payment connection required',
+                ),
                 trailing: FilledButton(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -423,7 +473,9 @@ class WalletPage extends StatelessWidget {
               child: ListTile(
                 leading: const Icon(Icons.account_balance),
                 title: const Text('Easypaisa'),
-                subtitle: const Text('Payment connection required'),
+                subtitle: const Text(
+                  'Payment connection required',
+                ),
                 trailing: FilledButton(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
