@@ -84,9 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                     if (phone.text.trim().length < 10) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text(
-                            'Please enter a valid mobile number.',
-                          ),
+                          content: Text('Please enter a valid mobile number.'),
                         ),
                       );
                       return;
@@ -119,10 +117,12 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int points = 0;
+  final List<String> history = [];
 
   void addPoints(int amount, String message) {
     setState(() {
       points += amount;
+      history.insert(0, '$message +$amount points');
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -132,9 +132,68 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void watchAd() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Watch Ad'),
+          content: const Text(
+            'Demo ad completed. Real ads will be connected later.',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context);
+                addPoints(5, 'Ad completed!');
+              },
+              child: const Text('Complete Ad'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void playGame() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Mini Game 🎮'),
+          content: const Text(
+            'Demo game completed! Tap below to collect your points.',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context);
+                addPoints(20, 'Game completed!');
+              },
+              child: const Text('Collect 20 Points'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void openWallet() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WalletPage(
+          points: points,
+          history: history,
+        ),
+      ),
+    );
+  }
+
   void resetPoints() {
     setState(() {
       points = 0;
+      history.clear();
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -168,6 +227,7 @@ class _HomePageState extends State<HomePage> {
               'Complete tasks and earn rewards every day.',
             ),
             const SizedBox(height: 25),
+
             Card(
               child: ListTile(
                 leading: const Icon(
@@ -186,7 +246,9 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
+
             const SizedBox(height: 15),
+
             const Text(
               'Daily Tasks',
               style: TextStyle(
@@ -194,7 +256,9 @@ class _HomePageState extends State<HomePage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+
             const SizedBox(height: 10),
+
             Card(
               child: ListTile(
                 leading: const Icon(Icons.task_alt),
@@ -208,20 +272,21 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
+
             Card(
               child: ListTile(
                 leading: const Icon(Icons.games),
                 title: const Text('Play & Earn'),
                 subtitle: const Text('Earn 20 points'),
                 trailing: FilledButton(
-                  onPressed: () {
-                    addPoints(20, 'Game completed!');
-                  },
+                  onPressed: playGame,
                   child: const Text('Play'),
                 ),
               ),
             ),
+
             const SizedBox(height: 20),
+
             const Text(
               'More Ways to Earn',
               style: TextStyle(
@@ -229,54 +294,179 @@ class _HomePageState extends State<HomePage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+
             const SizedBox(height: 10),
+
             Card(
               child: ListTile(
                 leading: const Icon(Icons.ondemand_video),
                 title: const Text('Watch Ads'),
-                subtitle: const Text(
-                  'Ad rewards will be connected later',
-                ),
+                subtitle: const Text('Earn 5 points per demo ad'),
                 trailing: OutlinedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Watch Ads is coming soon.'),
-                      ),
-                    );
-                  },
-                  child: const Text('Open'),
+                  onPressed: watchAd,
+                  child: const Text('Watch'),
                 ),
               ),
             ),
+
             Card(
               child: ListTile(
                 leading: const Icon(Icons.account_balance_wallet),
                 title: const Text('Wallet & Withdraw'),
-                subtitle: const Text(
-                  'Withdrawal system will be connected later',
-                ),
+                subtitle: const Text('View balance and withdrawal options'),
                 trailing: OutlinedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Wallet & Withdraw is coming soon.',
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: openWallet,
                   child: const Text('Open'),
                 ),
               ),
             ),
+
             const SizedBox(height: 20),
+
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
                 onPressed: resetPoints,
                 child: const Text('Reset Points'),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class WalletPage extends StatelessWidget {
+  final int points;
+  final List<String> history;
+
+  const WalletPage({
+    super.key,
+    required this.points,
+    required this.history,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final double estimatedValue = points / 1000;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Wallet'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Available Points',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$points',
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Demo value: ${estimatedValue.toStringAsFixed(2)}',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            const Text(
+              'Withdraw',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.phone_android),
+                title: const Text('JazzCash'),
+                subtitle: const Text('Payment connection required'),
+                trailing: FilledButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'JazzCash withdrawal will be connected after payment setup.',
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('Withdraw'),
+                ),
+              ),
+            ),
+
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.account_balance),
+                title: const Text('Easypaisa'),
+                subtitle: const Text('Payment connection required'),
+                trailing: FilledButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Easypaisa withdrawal will be connected after payment setup.',
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('Withdraw'),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            const Text(
+              'Recent Activity',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            Expanded(
+              child: history.isEmpty
+                  ? const Center(
+                      child: Text('No activity yet.'),
+                    )
+                  : ListView.builder(
+                      itemCount: history.length,
+                      itemBuilder: (context, index) {
+                        return Card(
+                          child: ListTile(
+                            leading: const Icon(Icons.history),
+                            title: Text(history[index]),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
