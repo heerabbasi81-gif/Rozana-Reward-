@@ -25,6 +25,7 @@ class RozanaRewards extends StatelessWidget {
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -92,8 +93,27 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int points = 0;
+
+  void addPoints(int amount, String message) {
+    setState(() {
+      points += amount;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$message +$amount points'),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +122,7 @@ class HomePage extends StatelessWidget {
         title: const Text('Rozana Rewards'),
         centerTitle: true,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,7 +135,9 @@ class HomePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Text('Complete tasks and earn rewards every day.'),
+            const Text(
+              'Complete tasks and earn rewards every day.',
+            ),
             const SizedBox(height: 25),
             Card(
               child: ListTile(
@@ -125,10 +147,10 @@ class HomePage extends StatelessWidget {
                   size: 40,
                 ),
                 title: const Text('Your Points'),
-                subtitle: const Text('Start earning today'),
-                trailing: const Text(
-                  '0',
-                  style: TextStyle(
+                subtitle: const Text('Keep earning!'),
+                trailing: Text(
+                  '$points',
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -148,13 +170,11 @@ class HomePage extends StatelessWidget {
               child: ListTile(
                 leading: const Icon(Icons.task_alt),
                 title: const Text('Complete your first task'),
-                subtitle: const Text('Earn points'),
+                subtitle: const Text('Earn 10 points'),
                 trailing: FilledButton(
                   onPressed: () {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Task started! +10 points')),
-  );
-},
+                    addPoints(10, 'Task completed!');
+                  },
                   child: const Text('Start'),
                 ),
               ),
@@ -163,11 +183,25 @@ class HomePage extends StatelessWidget {
               child: ListTile(
                 leading: const Icon(Icons.games),
                 title: const Text('Play & Earn'),
-                subtitle: const Text('Games and rewards'),
+                subtitle: const Text('Earn 20 points'),
                 trailing: FilledButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    addPoints(20, 'Game completed!');
+                  },
                   child: const Text('Play'),
                 ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  setState(() {
+                    points = 0;
+                  });
+                },
+                child: const Text('Reset Points'),
               ),
             ),
           ],
