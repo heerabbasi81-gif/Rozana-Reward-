@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+const supabaseUrl = 'https://jortcgndkmqrfhmchrub.supabase.co';
+const supabasePublishableKey =
+    'sb_publishable_MruMtPwY_Nw4j1tRDabfpg_INfG9X3d';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: supabaseUrl,
+    publishableKey: supabasePublishableKey,
+  );
+
   runApp(const RozanaRewards());
 }
 
@@ -137,6 +149,8 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> loadData() async {
     final prefs = await SharedPreferences.getInstance();
+
+    if (!mounted) return;
 
     setState(() {
       points = prefs.getInt('points') ?? 0;
@@ -318,10 +332,7 @@ class _HomePageState extends State<HomePage> {
               child: ListTile(
                 contentPadding: const EdgeInsets.all(12),
                 leading: const Icon(Icons.task_alt, size: 35),
-                title: const Text(
-                  'Complete your first task',
-                  style: TextStyle(fontSize: 17),
-                ),
+                title: const Text('Complete your first task'),
                 subtitle: const Text('Earn 10 points'),
                 trailing: FilledButton(
                   onPressed: completeTask,
@@ -334,10 +345,7 @@ class _HomePageState extends State<HomePage> {
               child: ListTile(
                 contentPadding: const EdgeInsets.all(12),
                 leading: const Icon(Icons.games, size: 35),
-                title: const Text(
-                  'Play & Earn',
-                  style: TextStyle(fontSize: 17),
-                ),
+                title: const Text('Play & Earn'),
                 subtitle: const Text('Earn 20 points'),
                 trailing: FilledButton(
                   onPressed: playGame,
@@ -365,10 +373,7 @@ class _HomePageState extends State<HomePage> {
                   Icons.ondemand_video,
                   size: 35,
                 ),
-                title: const Text(
-                  'Watch Ads',
-                  style: TextStyle(fontSize: 17),
-                ),
+                title: const Text('Watch Ads'),
                 subtitle: const Text(
                   'Earn 5 points per demo ad',
                 ),
@@ -386,10 +391,7 @@ class _HomePageState extends State<HomePage> {
                   Icons.account_balance_wallet,
                   size: 35,
                 ),
-                title: const Text(
-                  'Wallet & Withdraw',
-                  style: TextStyle(fontSize: 17),
-                ),
+                title: const Text('Wallet & Withdraw'),
                 subtitle: const Text(
                   'View balance and withdrawal options',
                 ),
@@ -409,8 +411,6 @@ class _HomePageState extends State<HomePage> {
                 child: const Text('Reset Points'),
               ),
             ),
-
-            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -477,7 +477,6 @@ class _WalletPageState extends State<WalletPage> {
 
     await prefs.setInt('points', points);
     await prefs.setStringList('history', history);
-
     await widget.onChanged();
 
     if (!mounted) return;
@@ -518,8 +517,8 @@ class _WalletPageState extends State<WalletPage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Minimum withdrawal: $minimumWithdrawal points',
+              const Text(
+                'Minimum withdrawal: 100 points',
               ),
               const SizedBox(height: 15),
               TextField(
@@ -568,13 +567,11 @@ class _WalletPageState extends State<WalletPage> {
 
   @override
   Widget build(BuildContext context) {
-    final double estimatedValue = points / 1000;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Wallet'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -596,10 +593,6 @@ class _WalletPageState extends State<WalletPage> {
                         fontSize: 38,
                         fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Demo value: ${estimatedValue.toStringAsFixed(2)}',
                     ),
                   ],
                 ),
@@ -625,13 +618,8 @@ class _WalletPageState extends State<WalletPage> {
                   Icons.phone_android,
                   size: 35,
                 ),
-                title: const Text(
-                  'JazzCash',
-                  style: TextStyle(fontSize: 17),
-                ),
-                subtitle: const Text(
-                  'Request withdrawal',
-                ),
+                title: const Text('JazzCash'),
+                subtitle: const Text('Request withdrawal'),
                 trailing: FilledButton(
                   onPressed: () {
                     showWithdrawalForm('JazzCash');
@@ -648,13 +636,8 @@ class _WalletPageState extends State<WalletPage> {
                   Icons.account_balance,
                   size: 35,
                 ),
-                title: const Text(
-                  'Easypaisa',
-                  style: TextStyle(fontSize: 17),
-                ),
-                subtitle: const Text(
-                  'Request withdrawal',
-                ),
+                title: const Text('Easypaisa'),
+                subtitle: const Text('Request withdrawal'),
                 trailing: FilledButton(
                   onPressed: () {
                     showWithdrawalForm('Easypaisa');
@@ -664,7 +647,7 @@ class _WalletPageState extends State<WalletPage> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 25),
 
             const Text(
               'Recent Activity',
@@ -676,26 +659,26 @@ class _WalletPageState extends State<WalletPage> {
 
             const SizedBox(height: 10),
 
-            Expanded(
-              child: history.isEmpty
-                  ? const Center(
-                      child: Text('No activity yet.'),
-                    )
-                  : ListView.builder(
-                      itemCount: history.length,
-                      itemBuilder: (context, index) {
-                        return Card(
-                          child: ListTile(
-                            leading: const Icon(Icons.history),
-                            title: Text(history[index]),
-                          ),
-                        );
-                      },
-                    ),
-            ),
+            if (history.isEmpty)
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(18),
+                  child: Text('No activity yet.'),
+                ),
+              )
+            else
+              ...history.map(
+                (item) => Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.history),
+                    title: Text(item),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 }
+
