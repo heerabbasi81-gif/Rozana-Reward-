@@ -24,6 +24,8 @@ class RozanaRewards extends StatelessWidget {
   }
 }
 
+// ================= LOGIN =================
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -41,7 +43,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void continueToApp() {
-    if (phone.text.trim().length < 10) {
+    final number = phone.text.trim();
+
+    if (number.length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid mobile number.'),
@@ -82,7 +86,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Daily Tasks • Games • Rewards',
+                'Daily tasks • Games • Rewards',
                 style: TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 35),
@@ -110,6 +114,8 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
+
+// ================= HOME =================
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -141,6 +147,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> saveData() async {
     final prefs = await SharedPreferences.getInstance();
+
     await prefs.setInt('points', points);
     await prefs.setStringList('history', history);
   }
@@ -162,42 +169,23 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void watchAd() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Watch Ad 📺'),
-          content: const Text(
-            'Demo ad completed. Real ads can be connected later.',
-          ),
-          actions: [
-            FilledButton(
-              onPressed: () {
-                Navigator.pop(context);
-                addPoints(5, 'Ad completed!');
-              },
-              child: const Text('Complete Ad'),
-            ),
-          ],
-        );
-      },
-    );
+  void completeTask() {
+    addPoints(10, 'Task completed!');
   }
 
   void playGame() {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Mini Game 🎮'),
           content: const Text(
-            'Demo game completed! Tap below to collect your points.',
+            'Demo game completed! Collect your reward.',
           ),
           actions: [
             FilledButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 addPoints(20, 'Game completed!');
               },
               child: const Text('Collect 20 Points'),
@@ -208,8 +196,31 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> openWallet() async {
-    await Navigator.push(
+  void watchAd() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Watch Ad 📺'),
+          content: const Text(
+            'Demo ad completed. Real ads can be connected later.',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                addPoints(5, 'Ad completed!');
+              },
+              child: const Text('Complete Ad'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void openWallet() {
+    Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => WalletPage(
@@ -218,8 +229,6 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
-
-    loadData();
   }
 
   Future<void> resetPoints() async {
@@ -269,22 +278,25 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 8),
             const Text(
               'Complete tasks and earn rewards every day.',
+              style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 25),
 
+            // POINTS
             Card(
               child: ListTile(
+                contentPadding: const EdgeInsets.all(12),
                 leading: const Icon(
                   Icons.monetization_on,
                   color: Colors.amber,
-                  size: 40,
+                  size: 42,
                 ),
                 title: const Text('Your Points'),
                 subtitle: const Text('Keep earning!'),
                 trailing: Text(
                   '$points',
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 26,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -303,24 +315,32 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 10),
 
+            // TASK
             Card(
               child: ListTile(
-                leading: const Icon(Icons.task_alt),
-                title: const Text('Complete your first task'),
+                contentPadding: const EdgeInsets.all(12),
+                leading: const Icon(Icons.task_alt, size: 35),
+                title: const Text(
+                  'Complete your first task',
+                  style: TextStyle(fontSize: 17),
+                ),
                 subtitle: const Text('Earn 10 points'),
                 trailing: FilledButton(
-                  onPressed: () {
-                    addPoints(10, 'Task completed!');
-                  },
+                  onPressed: completeTask,
                   child: const Text('Start'),
                 ),
               ),
             ),
 
+            // GAME
             Card(
               child: ListTile(
-                leading: const Icon(Icons.games),
-                title: const Text('Play & Earn'),
+                contentPadding: const EdgeInsets.all(12),
+                leading: const Icon(Icons.games, size: 35),
+                title: const Text(
+                  'Play & Earn',
+                  style: TextStyle(fontSize: 17),
+                ),
                 subtitle: const Text('Earn 20 points'),
                 trailing: FilledButton(
                   onPressed: playGame,
@@ -341,11 +361,21 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 10),
 
+            // ADS
             Card(
               child: ListTile(
-                leading: const Icon(Icons.ondemand_video),
-                title: const Text('Watch Ads'),
-                subtitle: const Text('Earn 5 points per demo ad'),
+                contentPadding: const EdgeInsets.all(12),
+                leading: const Icon(
+                  Icons.ondemand_video,
+                  size: 35,
+                ),
+                title: const Text(
+                  'Watch Ads',
+                  style: TextStyle(fontSize: 17),
+                ),
+                subtitle: const Text(
+                  'Earn 5 points per demo ad',
+                ),
                 trailing: OutlinedButton(
                   onPressed: watchAd,
                   child: const Text('Watch'),
@@ -353,12 +383,18 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
+            // WALLET
             Card(
               child: ListTile(
+                contentPadding: const EdgeInsets.all(12),
                 leading: const Icon(
                   Icons.account_balance_wallet,
+                  size: 35,
                 ),
-                title: const Text('Wallet & Withdraw'),
+                title: const Text(
+                  'Wallet & Withdraw',
+                  style: TextStyle(fontSize: 17),
+                ),
                 subtitle: const Text(
                   'View balance and withdrawal options',
                 ),
@@ -371,6 +407,7 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 20),
 
+            // RESET
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
@@ -378,12 +415,16 @@ class _HomePageState extends State<HomePage> {
                 child: const Text('Reset Points'),
               ),
             ),
+
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 }
+
+// ================= WALLET =================
 
 class WalletPage extends StatelessWidget {
   final int points;
@@ -394,6 +435,31 @@ class WalletPage extends StatelessWidget {
     required this.points,
     required this.history,
   });
+
+  void withdrawalMessage(
+    BuildContext context,
+    String method,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('$method Withdrawal'),
+          content: Text(
+            '$method payment connection is required before real withdrawal can be activated.',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -408,6 +474,7 @@ class WalletPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // BALANCE
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -422,7 +489,7 @@ class WalletPage extends StatelessWidget {
                     Text(
                       '$points',
                       style: const TextStyle(
-                        fontSize: 36,
+                        fontSize: 38,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -447,21 +514,26 @@ class WalletPage extends StatelessWidget {
 
             const SizedBox(height: 10),
 
+            // JAZZCASH
             Card(
               child: ListTile(
-                leading: const Icon(Icons.phone_android),
-                title: const Text('JazzCash'),
+                contentPadding: const EdgeInsets.all(12),
+                leading: const Icon(
+                  Icons.phone_android,
+                  size: 35,
+                ),
+                title: const Text(
+                  'JazzCash',
+                  style: TextStyle(fontSize: 17),
+                ),
                 subtitle: const Text(
                   'Payment connection required',
                 ),
                 trailing: FilledButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'JazzCash withdrawal will be connected after payment setup.',
-                        ),
-                      ),
+                    withdrawalMessage(
+                      context,
+                      'JazzCash',
                     );
                   },
                   child: const Text('Withdraw'),
@@ -469,21 +541,26 @@ class WalletPage extends StatelessWidget {
               ),
             ),
 
+            // EASYPAISA
             Card(
               child: ListTile(
-                leading: const Icon(Icons.account_balance),
-                title: const Text('Easypaisa'),
+                contentPadding: const EdgeInsets.all(12),
+                leading: const Icon(
+                  Icons.account_balance,
+                  size: 35,
+                ),
+                title: const Text(
+                  'Easypaisa',
+                  style: TextStyle(fontSize: 17),
+                ),
                 subtitle: const Text(
                   'Payment connection required',
                 ),
                 trailing: FilledButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Easypaisa withdrawal will be connected after payment setup.',
-                        ),
-                      ),
+                    withdrawalMessage(
+                      context,
+                      'Easypaisa',
                     );
                   },
                   child: const Text('Withdraw'),
@@ -513,8 +590,12 @@ class WalletPage extends StatelessWidget {
                       itemBuilder: (context, index) {
                         return Card(
                           child: ListTile(
-                            leading: const Icon(Icons.history),
-                            title: Text(history[index]),
+                            leading: const Icon(
+                              Icons.history,
+                            ),
+                            title: Text(
+                              history[index],
+                            ),
                           ),
                         );
                       },
