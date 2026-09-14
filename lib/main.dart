@@ -34,6 +34,12 @@ class _LoginPageState extends State<LoginPage> {
   final phone = TextEditingController();
 
   @override
+  void dispose() {
+    phone.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
@@ -75,6 +81,17 @@ class _LoginPageState extends State<LoginPage> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () {
+                    if (phone.text.trim().length < 10) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Please enter a valid mobile number.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -111,6 +128,18 @@ class _HomePageState extends State<HomePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$message +$amount points'),
+      ),
+    );
+  }
+
+  void resetPoints() {
+    setState(() {
+      points = 0;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Points reset.'),
       ),
     );
   }
@@ -193,14 +222,59 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 20),
+            const Text(
+              'More Ways to Earn',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.ondemand_video),
+                title: const Text('Watch Ads'),
+                subtitle: const Text(
+                  'Ad rewards will be connected later',
+                ),
+                trailing: OutlinedButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Watch Ads is coming soon.'),
+                      ),
+                    );
+                  },
+                  child: const Text('Open'),
+                ),
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.account_balance_wallet),
+                title: const Text('Wallet & Withdraw'),
+                subtitle: const Text(
+                  'Withdrawal system will be connected later',
+                ),
+                trailing: OutlinedButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Wallet & Withdraw is coming soon.',
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('Open'),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () {
-                  setState(() {
-                    points = 0;
-                  });
-                },
+                onPressed: resetPoints,
                 child: const Text('Reset Points'),
               ),
             ),
