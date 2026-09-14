@@ -147,7 +147,6 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> saveData() async {
     final prefs = await SharedPreferences.getInstance();
-
     await prefs.setInt('points', points);
     await prefs.setStringList('history', history);
   }
@@ -226,6 +225,7 @@ class _HomePageState extends State<HomePage> {
         builder: (_) => WalletPage(
           points: points,
           history: history,
+          onChanged: loadData,
         ),
       ),
     );
@@ -282,7 +282,6 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 25),
 
-            // POINTS
             Card(
               child: ListTile(
                 contentPadding: const EdgeInsets.all(12),
@@ -315,7 +314,6 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 10),
 
-            // TASK
             Card(
               child: ListTile(
                 contentPadding: const EdgeInsets.all(12),
@@ -332,7 +330,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
-            // GAME
             Card(
               child: ListTile(
                 contentPadding: const EdgeInsets.all(12),
@@ -361,7 +358,6 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 10),
 
-            // ADS
             Card(
               child: ListTile(
                 contentPadding: const EdgeInsets.all(12),
@@ -383,7 +379,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
-            // WALLET
             Card(
               child: ListTile(
                 contentPadding: const EdgeInsets.all(12),
@@ -407,7 +402,6 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 20),
 
-            // RESET
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
@@ -426,27 +420,79 @@ class _HomePageState extends State<HomePage> {
 
 // ================= WALLET =================
 
-class WalletPage extends StatelessWidget {
+class WalletPage extends StatefulWidget {
   final int points;
   final List<String> history;
+  final Future<void> Function() onChanged;
 
   const WalletPage({
     super.key,
     required this.points,
     required this.history,
+    required this.onChanged,
   });
 
-  void withdrawalMessage(
-    BuildContext context,
+  @override
+  State<WalletPage> createState() => _WalletPageState();
+}
+
+class _WalletPageState extends State<WalletPage> {
+  late int points;
+  late List<String> history;
+
+  static const int minimumWithdrawal = 100;
+
+  @override
+  void initState() {
+    super.initState();
+    points = widget.points;
+    history = List<String>.from(widget.history);
+  }
+
+  Future<void> requestWithdrawal(
     String method,
-  ) {
+    String number,
+  ) async {
+    if (points < minimumWithdrawal) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Minimum withdrawal is 100 points.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      points -= minimumWithdrawal;
+      history.insert(
+        0,
+        'Withdrawal requested: $method ($number) - '
+        '$minimumWithdrawal points',
+      );
+    });
+
+    await prefs.setInt('points', points);
+    await prefs.setStringList('history', history);
+
+    await widget.onChanged();
+
+    if (!mounted) return;
+
     showDialog(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text('$method Withdrawal'),
+          title: const Text('Request Submitted ✅'),
           content: Text(
-            '$method payment connection is required before real withdrawal can be activated.',
+            'Your $method withdrawal request has been recorded.\n\n'
+            'Amount: $minimumWithdrawal points\n'
+            'Account: $number\n\n'
+            'Payment is not automatic yet. Real JazzCash/Easypaisa '
+            'payment will require secure merchant integration.',
           ),
           actions: [
             FilledButton(
@@ -454,6 +500,65 @@ class WalletPage extends StatelessWidget {
                 Navigator.pop(dialogContext);
               },
               child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showWithdrawalForm(String method) {
+    final controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('$method Withdrawal'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Minimum withdrawal: $minimumWithdrawal points',
+              ),
+              const SizedBox(height: 15),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: '$method mobile number',
+                  hintText: '03XXXXXXXXX',
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final number = controller.text.trim();
+
+                if (number.length < 10) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Please enter a valid mobile number.',
+                      ),
+                    ),
+                  );
+                  return;
+                }
+
+                Navigator.pop(dialogContext);
+                requestWithdrawal(method, number);
+              },
+              child: const Text('Submit Request'),
             ),
           ],
         );
@@ -474,7 +579,6 @@ class WalletPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // BALANCE
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -514,7 +618,6 @@ class WalletPage extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // JAZZCASH
             Card(
               child: ListTile(
                 contentPadding: const EdgeInsets.all(12),
@@ -527,21 +630,17 @@ class WalletPage extends StatelessWidget {
                   style: TextStyle(fontSize: 17),
                 ),
                 subtitle: const Text(
-                  'Payment connection required',
+                  'Request withdrawal',
                 ),
                 trailing: FilledButton(
                   onPressed: () {
-                    withdrawalMessage(
-                      context,
-                      'JazzCash',
-                    );
+                    showWithdrawalForm('JazzCash');
                   },
                   child: const Text('Withdraw'),
                 ),
               ),
             ),
 
-            // EASYPAISA
             Card(
               child: ListTile(
                 contentPadding: const EdgeInsets.all(12),
@@ -554,14 +653,11 @@ class WalletPage extends StatelessWidget {
                   style: TextStyle(fontSize: 17),
                 ),
                 subtitle: const Text(
-                  'Payment connection required',
+                  'Request withdrawal',
                 ),
                 trailing: FilledButton(
                   onPressed: () {
-                    withdrawalMessage(
-                      context,
-                      'Easypaisa',
-                    );
+                    showWithdrawalForm('Easypaisa');
                   },
                   child: const Text('Withdraw'),
                 ),
@@ -590,12 +686,8 @@ class WalletPage extends StatelessWidget {
                       itemBuilder: (context, index) {
                         return Card(
                           child: ListTile(
-                            leading: const Icon(
-                              Icons.history,
-                            ),
-                            title: Text(
-                              history[index],
-                            ),
+                            leading: const Icon(Icons.history),
+                            title: Text(history[index]),
                           ),
                         );
                       },
