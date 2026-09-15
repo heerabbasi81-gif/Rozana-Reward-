@@ -46,33 +46,223 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final phone = TextEditingController();
+  final email = TextEditingController();
+  final password = TextEditingController();
+
+  bool loading = false;
 
   @override
   void dispose() {
-    phone.dispose();
+    email.dispose();
+    password.dispose();
     super.dispose();
   }
 
-  void continueToApp() {
-    final number = phone.text.trim();
+  Future<void> login() async {
+    final emailText = email.text.trim();
+    final passwordText = password.text;
 
-    if (number.length < 10) {
+    if (emailText.isEmpty || passwordText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter a valid mobile number.'),
+          content: Text('Please enter email and password.'),
         ),
       );
       return;
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const HomePage(),
+    setState(() {
+      loading = true;
+    });
+
+    try {
+      final response = await Supabase.instance.client.auth
+          .signInWithPassword(
+        email: emailText,
+        password: passwordText,
+      );
+
+      if (response.user == null) {
+        throw Exception('Login failed.');
+      }
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const HomePage(),
+        ),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Something went wrong. Please try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> createAccount() async {
+    final emailText = email.text.trim();
+    final passwordText = password.text;
+
+    if (emailText.isEmpty || passwordText.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Enter a valid email and password of at least 6 characters.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      loading = true;
+    });
+
+    try {
+      final response = await Supabase.instance.client.auth.signUp(
+        email: emailText,
+        password: passwordText,
+      );
+
+      if (!mounted) return;
+
+      if (response.session == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Account created. Please check your email to confirm your account.',
+            ),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomePage(),
+          ),
+        );
+      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not create account. Please try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.stars_rounded,
+                size: 80,
+                color: Color(0xFF6D28D9),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Rozana Rewards',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Daily tasks • Games • Rewards',
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 35),
+              TextField(
+                controller: email,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email_outlined),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: password,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: Icon(Icons.lock_outline),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: loading ? null : login,
+                  child: loading
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('Login'),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: loading ? null : createAccount,
+                  child: const Text('Create Account'),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
+}
+
+// ================= HOME =================
 
   @override
   Widget build(BuildContext context) {
